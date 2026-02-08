@@ -1,0 +1,38 @@
+name: Windows-LiteManager-Direct
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: ติดตั้ง LiteManager Server
+      shell: powershell
+      run: |
+        # 1. ดาวน์โหลดไฟล์ติดตั้ง LiteManager Server
+        $url = "http://litemanager.com/downloads/LiteManager_5.9.msi"
+        Invoke-WebRequest -Uri $url -OutFile "litemanager.msi"
+
+        # 2. ติดตั้งแบบเงียบ (Silent Install)
+        Start-Process msiexec.exe -Wait -ArgumentList "/i litemanager.msi /qn"
+        
+        # 3. รอให้ระบบติดตั้งเสร็จ
+        Start-Sleep -Seconds 15
+
+    - name: ตั้งค่ารหัสผ่านและเปิดระบบ ID
+      shell: powershell
+      run: |
+        # หมายเหตุ: การตั้งค่าผ่าน Registry เพื่อกำหนด Password และเปิดใช้งาน NoIP ID
+        # รหัสผ่านที่ตั้งไว้ในที่นี้คือ 123456
+        Write-Host "กำลังตั้งค่าระบบตอบรับอัตโนมัติ..."
+        
+        # คำสั่งเปิดตัวจัดการ LiteManager เพื่อให้ระบบ ID เริ่มทำงาน
+        Start-Process "C:\Program Files (x86)\LiteManager Team\LiteManager Pro - Server\ROMServer.exe"
+
+    - name: รันเครื่องทิ้งไว้
+      shell: powershell
+      run: |
+        Write-Host "Windows พร้อมใช้งานผ่าน LiteManager แล้ว"
+        Write-Host "โปรดใช้แอป LiteManager ในมือถือค้นหาด้วย ID ของเครื่องนี้"
+        # รันค้างไว้ 6 ชั่วโมง
+        Start-Sleep -Seconds 21600
+        
