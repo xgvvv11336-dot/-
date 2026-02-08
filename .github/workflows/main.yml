@@ -1,34 +1,29 @@
-name: Windows-AnyDesk-Fix
+name: Windows-ChromeRemoteDesktop
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: 1. Setup AnyDesk
+    - name: 1. Download and Install Chrome Remote Desktop
       shell: powershell
       run: |
-        # ดาวน์โหลด AnyDesk
-        Invoke-WebRequest -Uri "https://download.anydesk.com/AnyDesk.exe" -OutFile "AnyDesk.exe"
-        # ตั้งรหัสผ่านเป็น 123456
-        ./AnyDesk.exe --set-password "123456"
-        
-    - name: 2. Force Show AnyDesk ID
+        # ดาวน์โหลดไฟล์ติดตั้ง
+        Invoke-WebRequest -Uri https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi -OutFile crd.msi
+        # ติดตั้งลงเครื่อง (ใช้ msiexec เพื่อไม่ให้ Error)
+        Start-Process msiexec.exe -Wait -ArgumentList "/i crd.msi /qn"
+
+    - name: 2. Start Remote Desktop Service
       shell: powershell
       run: |
-        # รัน AnyDesk ทิ้งไว้เบื้องหลัง
-        Start-Process ./AnyDesk.exe
-        # รอ 30 วินาทีเพื่อให้เครื่องสร้าง ID สำเร็จ
-        Start-Sleep -Seconds 30
+        # กรุณานำ Auth Code จาก Google มาใส่ตรงบรรทัดล่างนี้แทนคำว่า 'YOUR_AUTH_CODE'
+        $authCode = "& "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0ASc3gC3ygHkZkoiW5qyOUnSHeBSFUr098H_kYZeSVZI-9YnPkSNj2yMBhsB7yUOxL4ubuQ" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME"
         
-        # ดึงเลข ID ออกมาแบบบังคับแสดงผล (Pipeline to Out-String)
-        $anyid = ./AnyDesk.exe --get-id | Out-String
-        $cleanid = $anyid.Trim()
-        
-        Write-Host "******************************************"
-        Write-Host "  YOUR ANYDESK ID IS: $cleanid"
-        Write-Host "  YOUR PASSWORD IS: 123456"
-        Write-Host "******************************************"
+        & "${Env:ProgramFiles(x86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" `
+          --code="$authCode" `
+          --redirect-url="https://remotedesktop.google.com/_/oauthredirect" `
+          --name=$Env:COMPUTERNAME `
+          --pin=123456
 
     - name: 3. Keep Machine Alive
       shell: powershell
