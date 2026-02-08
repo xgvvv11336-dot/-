@@ -1,30 +1,22 @@
-name: Windows-ChromeRemoteDesktop
+name: Remote-AnyDesk
 on: workflow_dispatch
-
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: 1. Download and Install Chrome Remote Desktop
-      shell: powershell
-      run: |
-        # ดาวน์โหลดไฟล์ติดตั้ง
-        Invoke-WebRequest -Uri https://dl.google.com/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi -OutFile crd.msi
-        # ติดตั้งลงเครื่อง (ใช้ msiexec เพื่อไม่ให้ Error)
-        Start-Process msiexec.exe -Wait -ArgumentList "/i crd.msi /qn"
+      - name: Install AnyDesk
+        run: |
+          Invoke-WebRequest -Uri "https://download.anydesk.com/AnyDesk.exe" -OutFile "AnyDesk.exe"
+          Start-Process ./AnyDesk.exe -ArgumentList "--install `"${Env:ProgramFiles(x86)}\AnyDesk`" --start-with-win --silent" -Wait
+          & "${Env:ProgramFiles(x86)}\AnyDesk\AnyDesk.exe" --set-password "123456"
+      - name: Display ID
+        run: |
+          Start-Sleep -Seconds 15
+          $ID = & "${Env:ProgramFiles(x86)}\AnyDesk\AnyDesk.exe" --get-id
+          echo "==============================="
+          echo "ANYDESK ID: $ID"
+          echo "PASSWORD: 123456"
+          echo "==============================="
+      - name: Keep Alive
+        run: Start-Sleep -Seconds 21600
 
-    - name: 2. Start Remote Desktop Service
-      shell: powershell
-      run: |
-        # กรุณานำ Auth Code จาก Google มาใส่ตรงบรรทัดล่างนี้แทนคำว่า 'YOUR_AUTH_CODE'
-        $authCode = "& "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="4/0ASc3gC3ygHkZkoiW5qyOUnSHeBSFUr098H_kYZeSVZI-9YnPkSNj2yMBhsB7yUOxL4ubuQ" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$Env:COMPUTERNAME"
-        
-        & "${Env:ProgramFiles(x86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" `
-          --code="$authCode" `
-          --redirect-url="https://remotedesktop.google.com/_/oauthredirect" `
-          --name=$Env:COMPUTERNAME `
-          --pin=123456
-
-    - name: 3. Keep Machine Alive
-      shell: powershell
-      run: Start-Sleep -Seconds 21600
