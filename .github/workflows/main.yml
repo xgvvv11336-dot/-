@@ -1,33 +1,29 @@
-name: Windows-AnyDesk
+name: Windows-AnyDesk-English
 on: workflow_dispatch
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: ติดตั้ง AnyDesk
+    - name: 1. Download AnyDesk
       shell: powershell
       run: |
-        # 1. ดาวน์โหลด AnyDesk
         Invoke-WebRequest -Uri "https://download.anydesk.com/AnyDesk.exe" -OutFile "AnyDesk.exe"
+        # Set password to: 123456
+        ./AnyDesk.exe --set-password "123456"
         
-        # 2. ตั้งรหัสผ่านสำหรับรีโมท (ในที่นี้คือ 123456)
-        echo "123456" | ./AnyDesk.exe --set-password
-        
-    - name: ดึงเลข ID เครื่องออกมา
+    - name: 2. Get AnyDesk ID
       shell: powershell
       run: |
-        # 3. สั่งรัน AnyDesk และรอให้มันสร้าง ID
         Start-Process ./AnyDesk.exe
-        Start-Sleep -Seconds 15
-        
-        # 4. ดึงเลข ID มาโชว์ที่หน้า Log
+        Start-Sleep -Seconds 20
+        # Get ID and show it clearly
         $anydeskId = ./AnyDesk.exe --get-id
         Write-Host "------------------------------------------"
-        Write-Host "เลข ID สำหรับเชื่อมต่อคือ: $anydeskId"
-        Write-Host "รหัสผ่านคือ: 123456"
+        Write-Host "YOUR ANYDESK ID IS: $anydeskId"
+        Write-Host "YOUR PASSWORD IS: 123456"
         Write-Host "------------------------------------------"
 
-    - name: เปิดเครื่องทิ้งไว้
+    - name: 3. Keep Running
       shell: powershell
       run: Start-Sleep -Seconds 21600
